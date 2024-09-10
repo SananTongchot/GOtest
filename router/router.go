@@ -1,7 +1,8 @@
 package router
 
 import (
-	"myapp/controller"
+	controller "myapp/API"
+
 	"github.com/gorilla/mux"
 )
 
