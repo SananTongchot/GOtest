@@ -30,6 +30,7 @@ func main() {
 	// สร้าง connection pool ไปยัง MySQL database
 	db, err := sql.Open("mysql", dsn)
 	if err != nil {
+		
 		panic(err)
 	}
 	defer db.Close()
