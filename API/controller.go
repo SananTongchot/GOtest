@@ -79,3 +79,7 @@ func LoginUser(w http.ResponseWriter, r *http.Request) {
 	// Generate a simple response for now (you might want to use JWT for token-based authentication)
 	json.NewEncoder(w).Encode(map[string]string{"message": "Login successful"})
 }
+func Test(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(map[string]string{"message": "Test Successful"})
+}
