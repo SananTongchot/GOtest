@@ -1,43 +1,40 @@
 // package main
+
 // import (
-//
-//	"fmt"
-//	"net/http"
-//
+// 	"log"
+// 	"net/http"
+// 	"myapp/controller"
+// 	"myapp/config"
+// 	"github.com/gorilla/mux"
 // )
-//
-//	func main() {
-//		http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
-//			fmt.Fprint(w, "Hello World")
-//		})
-//			// รันเซิร์ฟเวอร์ที่พอร์ต 8080
-//			http.ListenAndServe(":8080", nil)
-//		}
+
+// func main() {
+// 	config.Connect()
+
+// 	r := mux.NewRouter()
+
+// 	r.HandleFunc("/register", controller.RegisterUser).Methods("POST")
+// 	r.HandleFunc("/login", controller.LoginUser).Methods("POST")
+
+//		http.Handle("/", r)
+//		log.Fatal(http.ListenAndServe(":8080", nil))
+//	}
 package main
 
 import (
-	"database/sql"
-	"fmt"
-
-	_ "github.com/go-sql-driver/mysql" // ใช้ underscore (_) เพื่อ import driver โดยไม่ต้องเรียกใช้ตรงๆ
+	"log"
+	"myapp/config"
+	"myapp/router"
+	"net/http"
 )
 
 func main() {
-	// ระบุข้อมูลการเชื่อมต่อ เช่น username, password, hostname, และ database name
-	// รูปแบบ DSN: username:password@tcp(host:port)/dbname
-	dsn := "web66_65011212243:65011212243@csmsu@tcp(202.28.34.197:3306)/web66_65011212243"
+	// Connect to the database
+	config.Connect()
 
-	// สร้าง connection pool ไปยัง MySQL database
-	db, err := sql.Open("mysql", dsn)
-	if err != nil {
-		panic(err)
-	}
-	defer db.Close()
+	// Initialize routes
+	r := router.InitRoutes()
 
-	// ตรวจสอบการเชื่อมต่อ
-	err = db.Ping()
-	if err != nil {
-		panic(err)
-	}
-	fmt.Println("เชื่อมต่อฐานข้อมูลสำเร็จ!")
+	// Start the server
+	log.Fatal(http.ListenAndServe(":8080", r))
 }
