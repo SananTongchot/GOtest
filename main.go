@@ -1,17 +1,40 @@
+// package main
+
+// import (
+// 	"log"
+// 	"net/http"
+// 	"myapp/controller"
+// 	"myapp/config"
+// 	"github.com/gorilla/mux"
+// )
+
+// func main() {
+// 	config.Connect()
+
+// 	r := mux.NewRouter()
+
+// 	r.HandleFunc("/register", controller.RegisterUser).Methods("POST")
+// 	r.HandleFunc("/login", controller.LoginUser).Methods("POST")
+
+//		http.Handle("/", r)
+//		log.Fatal(http.ListenAndServe(":8080", nil))
+//	}
 package main
 
 import (
-    "log"
-    "net/http"
-    "myapp/config"
-    "myapp/router"
+	"log"
+	"myapp/config"
+	"myapp/router"
+	"net/http"
 )
 
 func main() {
-    config.Connect()
+	// Connect to the database
+	config.Connect()
 
-    r := router.InitRoutes()
+	// Initialize routes
+	r := router.InitRoutes()
 
-    log.Println("Server running on port 8080")
-    log.Fatal(http.ListenAndServe(":8080", r))
+	// Start the server
+	log.Fatal(http.ListenAndServe(":8080", r))
 }

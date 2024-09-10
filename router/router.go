@@ -1,14 +1,17 @@
 package router
 
 import (
-    "github.com/gorilla/mux"
-    "myapp/controller"
+	"myapp/controller"
+	"github.com/gorilla/mux"
 )
 
+// InitRoutes initializes and returns the router with all the routes defined
 func InitRoutes() *mux.Router {
-    router := mux.NewRouter()
+	router := mux.NewRouter()
 
-    router.HandleFunc("/users", controller.GetUsers).Methods("GET")
+	// Routes for authentication
+	router.HandleFunc("/register", controller.RegisterUser).Methods("POST")
+	router.HandleFunc("/login", controller.LoginUser).Methods("POST")
 
-    return router
+	return router
 }
