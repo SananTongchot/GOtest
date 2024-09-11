@@ -18,6 +18,7 @@ import (
 func RegisterUser(w http.ResponseWriter, r *http.Request) {
 	var user model.User
 	if err := json.NewDecoder(r.Body).Decode(&user); err != nil {
+		log.Println("Invalid input:", err) // เพิ่ม logging
 		http.Error(w, "Invalid input", http.StatusBadRequest)
 		return
 	}
@@ -31,6 +32,7 @@ func RegisterUser(w http.ResponseWriter, r *http.Request) {
 	// Hash the password
 	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(user.Password), bcrypt.DefaultCost)
 	if err != nil {
+		log.Println("Failed to hash password:", err) // เพิ่ม logging
 		http.Error(w, "Failed to hash password", http.StatusInternalServerError)
 		return
 	}
@@ -39,7 +41,7 @@ func RegisterUser(w http.ResponseWriter, r *http.Request) {
 	_, err = config.DB.Exec("INSERT INTO user (username, phone, email, password, type, credit) VALUES (?, ?, ?, ?, ?, ?)",
 		user.Username, user.Phone, user.Email, hashedPassword, "2", 10000)
 	if err != nil {
-		log.Println("Error inserting user:", err)
+		log.Println("Error inserting user:", err) // เพิ่ม logging
 		http.Error(w, "Failed to register user", http.StatusInternalServerError)
 		return
 	}
@@ -83,7 +85,6 @@ func LoginUser(w http.ResponseWriter, r *http.Request) {
 	// Generate a simple response for now (you might want to use JWT for token-based authentication)
 	json.NewEncoder(w).Encode(map[string]string{"message": "Login successful"})
 }
-
 
 func generateRandomNumber() string {
 	rand.Seed(time.Now().UnixNano())
