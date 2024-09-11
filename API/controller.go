@@ -12,6 +12,7 @@ import (
 )
 
 // RegisterUser handles user registration
+// RegisterUser handles user registration
 func RegisterUser(w http.ResponseWriter, r *http.Request) {
 	var user model.User
 	if err := json.NewDecoder(r.Body).Decode(&user); err != nil {
@@ -23,6 +24,19 @@ func RegisterUser(w http.ResponseWriter, r *http.Request) {
 	// Validate password
 	if user.Password == "" {
 		http.Error(w, "Password cannot be empty", http.StatusBadRequest)
+		return
+	}
+
+	// Check if the email is already registered
+	var existingUser string
+	err := config.DB.QueryRow("SELECT email FROM user WHERE email = ?", user.Email).Scan(&existingUser)
+	if err != nil && err != sql.ErrNoRows {
+		log.Println("Error checking email existence:", err)
+		http.Error(w, "Failed to register user", http.StatusInternalServerError)
+		return
+	}
+	if existingUser != "" {
+		http.Error(w, "Email is already registered", http.StatusConflict)
 		return
 	}
 
