@@ -21,3 +21,11 @@ type LotteryResponse struct {
 	Message string `json:"message"` // ข้อความแสดงผล
 	Number  string `json:"number"`  // เลขลอตเตอรีที่สุ่มได้
 }
+
+type Transaction struct {
+	TransactionID int `json:"tid"`            // สมมติว่ามีคอลัมน์ auto increment สำหรับรหัสรายการ
+	UserID        int `json:"uid"`            // รหัสผู้ใช้ที่ทำการซื้อหวย
+	LotteryID     int `json:"lid"`            // รหัสผู้ใช้ที่ทำการซื้อหวย
+	AmountPrice   int `json:"amount_price"`   // จำนวนเงินที่จ่ายไปสำหรับหวย
+	AmountLottery int `json:"amount_lottery"` // จำนวนหวยที่ซื้อ
+}
