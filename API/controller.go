@@ -61,6 +61,7 @@ func RegisterUser(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(map[string]string{"message": "User registered successfully"})
 }
 
+
 // LoginUser handles user login
 func LoginUser(w http.ResponseWriter, r *http.Request) {
 	var credentials struct {
