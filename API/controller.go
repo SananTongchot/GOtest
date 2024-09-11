@@ -49,6 +49,7 @@ func RegisterUser(w http.ResponseWriter, r *http.Request) {
 }
 
 // LoginUser handles user login
+// LoginUser handles user login
 func LoginUser(w http.ResponseWriter, r *http.Request) {
 	var credentials struct {
 		Email    string `json:"email"`
@@ -82,6 +83,7 @@ func LoginUser(w http.ResponseWriter, r *http.Request) {
 	// Generate a simple response for now (you might want to use JWT for token-based authentication)
 	json.NewEncoder(w).Encode(map[string]string{"message": "Login successful"})
 }
+
 
 func generateRandomNumber() string {
 	rand.Seed(time.Now().UnixNano())
