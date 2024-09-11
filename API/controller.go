@@ -86,6 +86,7 @@ func LoginUser(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(map[string]interface{}{
 		"message": "Login successful",
 		"uid":     user.UID,
+		"type":    user.Type,
 	})
 }
 func Test(w http.ResponseWriter, r *http.Request) {
