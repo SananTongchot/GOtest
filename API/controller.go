@@ -1,12 +1,15 @@
-package controller
+package myapp
 
 import (
 	"database/sql"
 	"encoding/json"
+	"fmt"
 	"log"
+	"math/rand"
 	"myapp/config"
 	"myapp/model"
 	"net/http"
+	"time"
 
 	"golang.org/x/crypto/bcrypt"
 )
@@ -15,6 +18,7 @@ import (
 func RegisterUser(w http.ResponseWriter, r *http.Request) {
 	var user model.User
 	if err := json.NewDecoder(r.Body).Decode(&user); err != nil {
+		log.Println("Invalid input:", err) // เพิ่ม logging
 		http.Error(w, "Invalid input", http.StatusBadRequest)
 		return
 	}
@@ -28,6 +32,7 @@ func RegisterUser(w http.ResponseWriter, r *http.Request) {
 	// Hash the password
 	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(user.Password), bcrypt.DefaultCost)
 	if err != nil {
+		log.Println("Failed to hash password:", err) // เพิ่ม logging
 		http.Error(w, "Failed to hash password", http.StatusInternalServerError)
 		return
 	}
@@ -36,7 +41,7 @@ func RegisterUser(w http.ResponseWriter, r *http.Request) {
 	_, err = config.DB.Exec("INSERT INTO user (username, phone, email, password, type, credit) VALUES (?, ?, ?, ?, ?, ?)",
 		user.Username, user.Phone, user.Email, hashedPassword, "2", 10000)
 	if err != nil {
-		log.Println("Error inserting user:", err)
+		log.Println("Error inserting user:", err) // เพิ่ม logging
 		http.Error(w, "Failed to register user", http.StatusInternalServerError)
 		return
 	}
@@ -45,6 +50,7 @@ func RegisterUser(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(map[string]string{"message": "User registered successfully"})
 }
 
+// LoginUser handles user login
 // LoginUser handles user login
 func LoginUser(w http.ResponseWriter, r *http.Request) {
 	var credentials struct {
@@ -85,4 +91,58 @@ func LoginUser(w http.ResponseWriter, r *http.Request) {
 func Test(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(map[string]string{"message": "Test Successful"})
+}
+
+func generateRandomNumber() string {
+	rand.Seed(time.Now().UnixNano())
+	return fmt.Sprintf("%06d", rand.Intn(1000000)) // สุ่มเลข 6 หลักระหว่าง 000000 ถึง 999999 และแปลงเป็น string
+}
+
+// ฟังก์ชัน handler สำหรับ endpoint /generate-lottery
+// GenerateLotteryHandler returns an HTTP handler function that generates lottery numbers
+func GenerateLotteryHandler(db *sql.DB) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
+
+		const numNumbers = 100
+		lottoNumbers := make([]string, 0, numNumbers)
+		uniqueNumbers := make(map[string]bool)
+
+		// Generate unique lottery numbers
+		for len(lottoNumbers) < numNumbers {
+			lottoNumber := generateRandomNumber()
+			if _, exists := uniqueNumbers[lottoNumber]; !exists {
+				uniqueNumbers[lottoNumber] = true
+				lottoNumbers = append(lottoNumbers, lottoNumber)
+			}
+		}
+
+		// Insert the numbers into the database
+		tx, err := db.Begin()
+		if err != nil {
+			http.Error(w, "Failed to start transaction", http.StatusInternalServerError)
+			return
+		}
+
+		defer func() {
+			if err != nil {
+				tx.Rollback()
+				http.Error(w, err.Error(), http.StatusInternalServerError)
+			} else {
+				tx.Commit()
+				response := model.LotteryResponse{
+					Message: fmt.Sprintf("%d lottery numbers generated and saved successfully", numNumbers),
+					Number:  "",
+				}
+				json.NewEncoder(w).Encode(response)
+			}
+		}()
+
+		for _, lottoNumber := range lottoNumbers {
+			_, err := tx.Exec("INSERT INTO lottery (lotto_number) VALUES (?)", lottoNumber)
+			if err != nil {
+				return // return immediately to trigger rollback
+			}
+		}
+	}
 }
