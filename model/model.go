@@ -29,3 +29,4 @@ type Transaction struct {
 	AmountPrice   int `json:"amount_price"`   // จำนวนเงินที่จ่ายไปสำหรับหวย
 	AmountLottery int `json:"amount_lottery"` // จำนวนหวยที่ซื้อ
 }
+

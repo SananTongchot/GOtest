@@ -4,6 +4,7 @@ import (
 	"database/sql"
 	"encoding/json"
 	"fmt"
+	"log"
 	"math/rand"
 	"myapp/model"
 	"net/http"
@@ -19,10 +20,28 @@ func GenerateLotteryHandler(db *sql.DB) http.HandlerFunc {
 		lottoNumbers := make([]string, 0, numNumbers)
 		uniqueNumbers := make(map[string]bool)
 
+		// ดึงเลขหวยที่มีอยู่แล้วจากฐานข้อมูลเพื่อตรวจสอบว่าไม่ซ้ำ
+		existingNumbers := make(map[string]bool)
+		rows, err := db.Query("SELECT lotto_number FROM lottery")
+		if err != nil {
+			http.Error(w, "Failed to query existing numbers", http.StatusInternalServerError)
+			return
+		}
+		defer rows.Close()
+
+		for rows.Next() {
+			var number string
+			if err := rows.Scan(&number); err != nil {
+				http.Error(w, "Failed to read existing numbers", http.StatusInternalServerError)
+				return
+			}
+			existingNumbers[number] = true
+		}
+
 		// Generate unique lottery numbers
 		for len(lottoNumbers) < numNumbers {
 			lottoNumber := generateRandomNumber()
-			if _, exists := uniqueNumbers[lottoNumber]; !exists {
+			if _, exists := uniqueNumbers[lottoNumber]; !exists && !existingNumbers[lottoNumber] {
 				uniqueNumbers[lottoNumber] = true
 				lottoNumbers = append(lottoNumbers, lottoNumber)
 			}
@@ -52,6 +71,7 @@ func GenerateLotteryHandler(db *sql.DB) http.HandlerFunc {
 		for _, lottoNumber := range lottoNumbers {
 			_, err := tx.Exec("INSERT INTO lottery (lotto_number) VALUES (?)", lottoNumber)
 			if err != nil {
+				log.Println("Failed to insert lottery number:", err)
 				return // return immediately to trigger rollback
 			}
 		}
@@ -63,3 +83,4 @@ func generateRandomNumber() string {
 	rand.Seed(time.Now().UnixNano())
 	return fmt.Sprintf("%06d", rand.Intn(1000000)) // Generate a 6-digit random number between 000000 and 999999
 }
+
