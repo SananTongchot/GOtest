@@ -3,8 +3,8 @@ package myapp
 import (
 	"database/sql"
 	"encoding/json"
-	"net/http"
 	"myapp/model"
+	"net/http"
 )
 
 // GetUnpurchasedLotteriesHandler คืนค่า HTTP handler function ที่ใช้ในการดึงข้อมูลลอตเตอรี่ที่ยังไม่ถูกซื้อ
@@ -13,7 +13,7 @@ func GetUnpurchasedLotteriesHandler(db *sql.DB) http.HandlerFunc {
 		w.Header().Set("Content-Type", "application/json")
 
 		// ดึงข้อมูลลอตเตอรี่ที่ยังไม่ถูกซื้อ (sold = 0)
-		rows, err := db.Query("SELECT lid, lotto_number, price FROM lottery WHERE sold = 0")
+		rows, err := db.Query("SELECT lid, lotto_number, price FROM lottery WHERE sold = 0 order by lotto_number asc")
 		if err != nil {
 			http.Error(w, "เกิดข้อผิดพลาดในการดึงข้อมูลลอตเตอรี่ที่ยังไม่ถูกซื้อ", http.StatusInternalServerError)
 			return
