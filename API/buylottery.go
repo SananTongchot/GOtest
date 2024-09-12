@@ -6,7 +6,6 @@ import (
 	"log"
 	"myapp/config"
 	"myapp/model"
-
 	"net/http"
 )
 
@@ -85,6 +84,21 @@ func BuyLottery(w http.ResponseWriter, r *http.Request) {
 
 		// เพิ่มราคาหวยลงในราคาทั้งหมด
 		totalCost += lottery.Price
+
+		// อัปเดตสถานะหวยเป็นขายแล้ว
+		_, err = tx.Exec("UPDATE lottery SET sold = 1 WHERE lid = ?", lotteryID)
+		if err != nil {
+			log.Println("เกิดข้อผิดพลาดในการอัปเดตสถานะหวย:", err)
+			return
+		}
+
+		// บันทึกข้อมูลลงในตาราง transactions พร้อมกับ lotto_number
+		_, err = tx.Exec("INSERT INTO transactions (uid, lid, lotto_number, amount_price, amount_lottery) VALUES (?, ?, ?, ?, ?)",
+			purchaseRequest.UserID, lotteryID, lottery.LottoNumber, lottery.Price, 1)
+		if err != nil {
+			log.Println("เกิดข้อผิดพลาดในการบันทึกข้อมูลการทำรายการ:", err)
+			return
+		}
 	}
 
 	// ตรวจสอบว่าเครดิตของผู้ใช้เพียงพอหรือไม่
@@ -100,24 +114,6 @@ func BuyLottery(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		log.Println("เกิดข้อผิดพลาดในการอัปเดตเครดิตของผู้ใช้:", err)
 		return
-	}
-
-	// บันทึกและอัปเดตสถานะหวยที่ซื้อแต่ละรายการ
-	for _, lotteryID := range purchaseRequest.LotteryIDs {
-		// อัปเดตสถานะหวยเป็นขายแล้ว
-		_, err = tx.Exec("UPDATE lottery SET sold = 1 WHERE lid = ?", lotteryID)
-		if err != nil {
-			log.Println("เกิดข้อผิดพลาดในการอัปเดตสถานะหวย:", err)
-			return
-		}
-
-		// บันทึกข้อมูลลงในตาราง transactions
-		_, err = tx.Exec("INSERT INTO transactions (uid, lid, amount_price, amount_lottery) VALUES (?, ?, ?, ?)",
-			purchaseRequest.UserID, lotteryID, 80, 1)
-		if err != nil {
-			log.Println("เกิดข้อผิดพลาดในการบันทึกข้อมูลการทำรายการ:", err)
-			return
-		}
 	}
 
 	// ส่งผลลัพธ์กลับไปยังผู้ใช้
