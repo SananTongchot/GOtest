@@ -49,8 +49,8 @@ func RegisterUser(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Insert into the database
-	_, err = config.DB.Exec("INSERT INTO user (username, phone, email, password, type, credit) VALUES (?, ?, ?, ?, ?, ?)",
-		user.Username, user.Phone, user.Email, hashedPassword, "2", 10000)
+	_, err = config.DB.Exec("INSERT INTO user (username, phone, email, password, type) VALUES (?, ?, ?, ?, ?)",
+		user.Username, user.Phone, user.Email, hashedPassword, "2")
 	if err != nil {
 		log.Println("Error inserting user:", err)
 		http.Error(w, "Failed to register user", http.StatusInternalServerError)
