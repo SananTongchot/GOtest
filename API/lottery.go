@@ -11,7 +11,10 @@ import (
 	"time"
 )
 
-// GenerateLotteryHandler returns an HTTP handler function that generates lottery numbers
+// สร้างเครื่องกำเนิดเลขสุ่ม global
+var rng = rand.New(rand.NewSource(time.Now().UnixNano()))
+
+// GenerateLotteryHandler คืนค่า HTTP handler function ที่สร้างหมายเลขลอตเตอรี่
 func GenerateLotteryHandler(db *sql.DB) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
@@ -20,7 +23,7 @@ func GenerateLotteryHandler(db *sql.DB) http.HandlerFunc {
 		lottoNumbers := make([]string, 0, numNumbers)
 		uniqueNumbers := make(map[string]bool)
 
-		// ดึงเลขหวยที่มีอยู่แล้วจากฐานข้อมูลเพื่อตรวจสอบว่าไม่ซ้ำ
+		// ดึงหมายเลขลอตเตอรี่ที่มีอยู่แล้วจากฐานข้อมูล
 		existingNumbers := make(map[string]bool)
 		rows, err := db.Query("SELECT lotto_number FROM lottery")
 		if err != nil {
@@ -38,7 +41,7 @@ func GenerateLotteryHandler(db *sql.DB) http.HandlerFunc {
 			existingNumbers[number] = true
 		}
 
-		// Generate unique lottery numbers
+		// สร้างหมายเลขลอตเตอรี่ที่ไม่ซ้ำ
 		for len(lottoNumbers) < numNumbers {
 			lottoNumber := generateRandomNumber()
 			if _, exists := uniqueNumbers[lottoNumber]; !exists && !existingNumbers[lottoNumber] {
@@ -47,7 +50,7 @@ func GenerateLotteryHandler(db *sql.DB) http.HandlerFunc {
 			}
 		}
 
-		// Insert the numbers into the database
+		// แทรกหมายเลขลงในฐานข้อมูล
 		tx, err := db.Begin()
 		if err != nil {
 			http.Error(w, "Failed to start transaction", http.StatusInternalServerError)
@@ -72,15 +75,13 @@ func GenerateLotteryHandler(db *sql.DB) http.HandlerFunc {
 			_, err := tx.Exec("INSERT INTO lottery (lotto_number) VALUES (?)", lottoNumber)
 			if err != nil {
 				log.Println("Failed to insert lottery number:", err)
-				return // return immediately to trigger rollback
+				return // คืนค่าทันทีเพื่อให้เกิดการ rollback
 			}
 		}
 	}
 }
 
-// generateRandomNumber generates a random 6-digit number as a string
+// generateRandomNumber สร้างหมายเลขสุ่ม 6 หลักเป็นสตริง
 func generateRandomNumber() string {
-	rand.Seed(time.Now().UnixNano())
-	return fmt.Sprintf("%06d", rand.Intn(1000000)) // Generate a 6-digit random number between 000000 and 999999
+	return fmt.Sprintf("%06d", rng.Intn(1000000)) // สร้างหมายเลขสุ่ม 6 หลักระหว่าง 000000 และ 999999
 }
-
