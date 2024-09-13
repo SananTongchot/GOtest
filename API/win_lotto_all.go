@@ -10,15 +10,8 @@ import (
 	"time"
 )
 
-// โครงสร้างข้อมูลเลขรางวัล
-type WinningNumber struct {
-	LottoNumber string `json:"lotto_number"`
-	PrizeAmount int    `json:"prize_amount"`
-	Lid         int    `json:"lid"`
-}
-
 // ฟังก์ชันสำหรับออกรางวัล
-func DrawPrizes(w http.ResponseWriter, r *http.Request) {
+func DrawPrizesAll(w http.ResponseWriter, r *http.Request) {
 	// ตรวจสอบว่ามีการออกรางวัลอยู่แล้วหรือไม่
 	var count int
 	err := config.DB.QueryRow("SELECT COUNT(*) FROM winning_numbers").Scan(&count)
@@ -35,7 +28,7 @@ func DrawPrizes(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// ดึงเลขหวยที่ถูกซื้อไปแล้ว
-	rows, err := config.DB.Query("SELECT lid, lotto_number FROM lottery WHERE sold = 1")
+	rows, err := config.DB.Query("SELECT lid, lotto_number FROM lottery")
 	if err != nil {
 		log.Println("เกิดข้อผิดพลาดในการดึงข้อมูลเลขหวยที่ถูกซื้อ:", err)
 		http.Error(w, "ข้อผิดพลาดในการออกรางวัล", http.StatusInternalServerError)
@@ -81,7 +74,7 @@ func DrawPrizes(w http.ResponseWriter, r *http.Request) {
 	prizeAmounts := []int{1000000, 500000, 100000, 50000, 10000}
 
 	for _, prizeAmount := range prizeAmounts {
-		prize, err := getUniqueRandomPrize(purchasedNumbers, existingWinners, prizeAmount)
+		prize, err := getUniqueRandomPrize1(purchasedNumbers, existingWinners, prizeAmount)
 		if err != nil {
 			log.Println("เกิดข้อผิดพลาดในการสุ่มรางวัล:", err)
 			http.Error(w, "ข้อผิดพลาดในการออกรางวัล", http.StatusInternalServerError)
@@ -125,12 +118,10 @@ func DrawPrizes(w http.ResponseWriter, r *http.Request) {
 		"message": "ออกรางวัลสำเร็จ",
 		"prizes":  prizes,
 	})
-
 }
 
 // ฟังก์ชันสำหรับสุ่มเลขรางวัลที่ไม่เคยถูกรางวัลมาก่อน
-func getUniqueRandomPrize(numbers map[string]int, existingWinners map[string]bool, prizeAmount int) (WinningNumber, error) {
-	// สร้างตัวแปร random ใหม่โดยใช้ NewSource
+func getUniqueRandomPrize1(numbers map[string]int, existingWinners map[string]bool, prizeAmount int) (WinningNumber, error) {
 	r := rand.New(rand.NewSource(time.Now().UnixNano()))
 
 	keys := make([]string, 0, len(numbers))

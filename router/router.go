@@ -15,12 +15,15 @@ func InitRoutes(db *sql.DB) *mux.Router {
 	router.HandleFunc("/register", controller.RegisterUser).Methods("POST")
 	router.HandleFunc("/login", controller.LoginUser).Methods("POST")
 	// router.HandleFunc("/", controller.Test).Methods("GET")
-	router.HandleFunc("/random", controller.GenerateLotteryHandler(db)).Methods("POST")
+	router.HandleFunc("/random", controller.GenerateLotteryHandler(db)).Methods("GET")
 	router.HandleFunc("/win_lotto", controller.DrawPrizes).Methods("POST")
+	router.HandleFunc("/win_lotto_all", controller.DrawPrizesAll).Methods("POST")
 	router.HandleFunc("/buy_lottery", controller.BuyLottery).Methods("POST")
 	router.HandleFunc("/get_lotto_for_buy", controller.GetUnpurchasedLotteriesHandler(db)).Methods("GET")
 	router.HandleFunc("/check_lotto", controller.CheckUserLotteryResultsHandler(db)).Methods("POST")
 	router.HandleFunc("/reward", controller.RewardPrize(db)).Methods("POST")
 	router.HandleFunc("/reset", controller.ResetHandler(db)).Methods("DELETE")
+	router.HandleFunc("/get1", controller.GetaUser).Methods("POST")
+
 	return router
 }
