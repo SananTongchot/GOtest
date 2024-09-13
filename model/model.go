@@ -7,7 +7,7 @@ type User struct {
 	Email    string `json:"email"`
 	Password string `json:"password"`
 	Type     string `json:"type"` // "1" for admin, "2" for user
-	// Credit   int    `json:"credit"`
+	Credit   int    `json:"credit"`
 }
 
 type Lottery struct {

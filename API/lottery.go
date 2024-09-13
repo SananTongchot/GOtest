@@ -10,7 +10,7 @@ import (
 	"net/http"
 	"time"
 )
-
+var rng = rand.New(rand.NewSource(time.Now().UnixNano()))
 // GenerateLotteryHandler returns an HTTP handler function that generates lottery numbers
 func GenerateLotteryHandler(db *sql.DB) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
@@ -80,7 +80,6 @@ func GenerateLotteryHandler(db *sql.DB) http.HandlerFunc {
 
 // generateRandomNumber generates a random 6-digit number as a string
 func generateRandomNumber() string {
-	rand.Seed(time.Now().UnixNano())
-	return fmt.Sprintf("%06d", rand.Intn(1000000)) // Generate a 6-digit random number between 000000 and 999999
+	return fmt.Sprintf("%06d", rng.Intn(1000000)) // สร้างหมายเลขสุ่ม 6 หลักระหว่าง 000000 และ 999999
 }
 
