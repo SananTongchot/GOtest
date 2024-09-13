@@ -25,7 +25,7 @@ func GetaUser(w http.ResponseWriter, r *http.Request) {
 	}
 
 	var user model.User
-	err = config.DB.QueryRow("SELECT uid, username, phone, email, password, credit, type FROM users WHERE uid = ?", reqBody.UID).Scan(
+	err = config.DB.QueryRow("SELECT uid, username, phone, email, password, credit, type FROM user WHERE uid = ?", reqBody.UID).Scan(
 		&user.UID, &user.Username, &user.Phone, &user.Email, &user.Password, &user.Credit, &user.Type,
 	)
 	if err != nil {
