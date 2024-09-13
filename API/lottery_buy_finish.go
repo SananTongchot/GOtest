@@ -18,6 +18,7 @@ type PurchasedLottery struct {
 	LottoNumber   string `json:"lotto_number"`
 	AmountPrice   int    `json:"amount_price"`
 	AmountLottery int    `json:"amount_lottery"`
+	Win           bool   `json:"win"` // เพิ่มคอลัมน์ win
 }
 
 // ฟังก์ชันสำหรับแสดงลอตเตอรี่ทั้งหมดที่ผู้ใช้ซื้อไปแล้ว (POST)
@@ -38,7 +39,7 @@ func GetPurchasedLotteriesByUID(w http.ResponseWriter, r *http.Request) {
 
 	// Query ข้อมูลลอตเตอรี่ที่ผู้ใช้ซื้อไปแล้ว
 	query := `
-		SELECT t.lid, t.lotto_number, t.amount_price, t.amount_lottery
+		SELECT t.lid, t.lotto_number, t.amount_price, t.amount_lottery, l.win
 		FROM transactions t
 		INNER JOIN lottery l ON t.lid = l.lid
 		WHERE t.uid = ?;
@@ -56,7 +57,7 @@ func GetPurchasedLotteriesByUID(w http.ResponseWriter, r *http.Request) {
 	var lotteries []PurchasedLottery
 	for rows.Next() {
 		var lottery PurchasedLottery
-		err := rows.Scan(&lottery.Lid, &lottery.LottoNumber, &lottery.AmountPrice, &lottery.AmountLottery)
+		err := rows.Scan(&lottery.Lid, &lottery.LottoNumber, &lottery.AmountPrice, &lottery.AmountLottery, &lottery.Win) // เพิ่มการสแกนคอลัมน์ win
 		if err != nil {
 			log.Println("เกิดข้อผิดพลาดในการอ่านข้อมูลลอตเตอรี่:", err)
 			http.Error(w, "ข้อผิดพลาดภายในเซิร์ฟเวอร์", http.StatusInternalServerError)
