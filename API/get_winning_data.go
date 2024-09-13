@@ -18,7 +18,7 @@ type WinningNumber2 struct {
 // GetAllWinningNumbers ดึงข้อมูลทั้งหมดจากตาราง winning_numbers
 func GetAllWinningNumbers(w http.ResponseWriter, r *http.Request) {
 	// ดึงข้อมูลจากตาราง winning_numbers
-	rows, err := config.DB.Query("SELECT lotto_number, prize_amount, lid FROM winning_numbers order by lid asc")
+	rows, err := config.DB.Query("SELECT lotto_number, prize_amount, lid FROM winning_numbers order by prize_amount desc")
 	if err != nil {
 		log.Println("เกิดข้อผิดพลาดในการดึงข้อมูลรางวัล:", err)
 		http.Error(w, "ข้อผิดพลาดภายในเซิร์ฟเวอร์", http.StatusInternalServerError)

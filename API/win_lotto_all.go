@@ -110,6 +110,23 @@ func DrawPrizesAll(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 	}
+// บันทึกเลขรางวัลที่ 1-5 ลงในฐานข้อมูล
+for _, prize := range prizes {
+    // บันทึกข้อมูลรางวัลลงในตาราง winning_numbers
+    _, err = tx.Exec("INSERT INTO winning_numbers (lotto_number, prize_amount, lid) VALUES (?, ?, ?)",
+        prize.LottoNumber, prize.PrizeAmount, prize.Lid)
+    if err != nil {
+        log.Println("เกิดข้อผิดพลาดในการบันทึกข้อมูลรางวัล:", err)
+        return
+    }
+
+    // อัปเดตคอลัมน์ win ในตาราง lottery ให้เป็น 1 สำหรับเลขที่ถูกรางวัล
+    _, err = tx.Exec("UPDATE lottery SET win = 1 WHERE lid = ?", prize.Lid)
+    if err != nil {
+        log.Println("เกิดข้อผิดพลาดในการอัปเดตสถานะชนะ:", err)
+        return
+    }
+}
 
 	// ส่งผลลัพธ์กลับไปยังผู้ใช้
 	w.WriteHeader(http.StatusOK)
