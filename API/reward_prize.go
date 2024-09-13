@@ -69,29 +69,32 @@ func RewardPrize(db *sql.DB) http.HandlerFunc {
 		var totalPrizeAmount int
 		var winningNumbers []map[string]interface{}
 		for _, lottoInfo := range userLottoNumbers {
-			var prizeAmount int
+			var prizeAmount, status int
 			err := db.QueryRow(`
-				SELECT wn.prize_amount 
+				SELECT wn.prize_amount, wn.status 
 				FROM winning_numbers wn 
 				JOIN lottery l ON wn.lid = l.lid 
-				WHERE l.lotto_number = ?`, lottoInfo["lotto_number"]).Scan(&prizeAmount)
+				WHERE l.lotto_number = ?`, lottoInfo["lotto_number"]).Scan(&prizeAmount, &status)
 			if err == nil {
-				winningNumbers = append(winningNumbers, map[string]interface{}{
-					"lid":          lottoInfo["lid"],
-					"lotto_number": lottoInfo["lotto_number"],
-					"prize_amount": prizeAmount,
-				})
-				totalPrizeAmount += prizeAmount
+				// ถ้า status เป็น 0, ให้เพิ่มเงินรางวัล
+				if status == 0 {
+					winningNumbers = append(winningNumbers, map[string]interface{}{
+						"lid":          lottoInfo["lid"],
+						"lotto_number": lottoInfo["lotto_number"],
+						"prize_amount": prizeAmount,
+					})
+					totalPrizeAmount += prizeAmount
 
-				// Update winning lottery status
-				_, err = db.Exec(`
-					UPDATE winning_numbers 
-					SET status = 1 
-					WHERE lotto_number = ?`, lottoInfo["lotto_number"])
-				if err != nil {
-					log.Println("เกิดข้อผิดพลาดในการอัปเดตสถานะหมายเลขลอตเตอรี่:", err)
-					http.Error(w, "ข้อผิดพลาดในการอัปเดตสถานะหมายเลขลอตเตอรี่", http.StatusInternalServerError)
-					return
+					// Update winning lottery status to 1 (claimed)
+					_, err = db.Exec(`
+						UPDATE winning_numbers 
+						SET status = 1 
+						WHERE lotto_number = ?`, lottoInfo["lotto_number"])
+					if err != nil {
+						log.Println("เกิดข้อผิดพลาดในการอัปเดตสถานะหมายเลขลอตเตอรี่:", err)
+						http.Error(w, "ข้อผิดพลาดในการอัปเดตสถานะหมายเลขลอตเตอรี่", http.StatusInternalServerError)
+						return
+					}
 				}
 			} else if err != sql.ErrNoRows {
 				log.Println("เกิดข้อผิดพลาดในการตรวจสอบรางวัล:", err)
@@ -112,15 +115,17 @@ func RewardPrize(db *sql.DB) http.HandlerFunc {
 			return
 		}
 
-		// Update user credit
-		_, err = db.Exec(`
-			UPDATE user
-			SET credit = credit + ? 
-			WHERE uid = ?`, totalPrizeAmount, userRequest.UID)
-		if err != nil {
-			log.Println("เกิดข้อผิดพลาดในการเพิ่มเครดิตให้ผู้ใช้:", err)
-			http.Error(w, "ข้อผิดพลาดในการเพิ่มเครดิต", http.StatusInternalServerError)
-			return
+		// Update user credit only if there is a total prize amount to add
+		if totalPrizeAmount > 0 {
+			_, err = db.Exec(`
+				UPDATE user
+				SET credit = credit + ? 
+				WHERE uid = ?`, totalPrizeAmount, userRequest.UID)
+			if err != nil {
+				log.Println("เกิดข้อผิดพลาดในการเพิ่มเครดิตให้ผู้ใช้:", err)
+				http.Error(w, "ข้อผิดพลาดในการเพิ่มเครดิต", http.StatusInternalServerError)
+				return
+			}
 		}
 
 		// Fetch updated credit after the update
