@@ -22,7 +22,7 @@ func InitRoutes(db *sql.DB) *mux.Router {
 	router.HandleFunc("/get_lotto_for_buy", controller.GetUnpurchasedLotteriesHandler(db)).Methods("GET")
 	router.HandleFunc("/check_lotto", controller.CheckUserLotteryResultsHandler(db)).Methods("POST")
 	router.HandleFunc("/reward", controller.RewardPrize(db)).Methods("POST")
-	router.HandleFunc("/reset", controller.ResetHandler(db)).Methods("DELETE")
+	router.HandleFunc("/reset", controller.ResetHandler(db)).Methods("POST")
 	router.HandleFunc("/get1", controller.GetaUser).Methods("POST")
 	router.HandleFunc("/lotto_buy_finish", controller.GetPurchasedLotteriesByUID).Methods("POST")
 	router.HandleFunc("/lotto_buy_finish2", controller.GetPurchasedLotteriesByUID2).Methods("POST")
