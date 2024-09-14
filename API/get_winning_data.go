@@ -18,7 +18,7 @@ type WinningNumber2 struct {
 // GetAllWinningNumbers ดึงข้อมูลทั้งหมดจากตาราง winning_numbers
 func GetAllWinningNumbers(w http.ResponseWriter, r *http.Request) {
 	// ดึงข้อมูลจากตาราง winning_numbers
-	rows, err := config.DB.Query("SELECT lotto_number, prize_amount, lid FROM winning_numbers order by prize_amount desc")
+	rows, err := config.DB.Query("SELECT lotto_number, prize_amount, lid FROM winning_numbers ORDER BY prize_amount DESC")
 	if err != nil {
 		log.Println("เกิดข้อผิดพลาดในการดึงข้อมูลรางวัล:", err)
 		http.Error(w, "ข้อผิดพลาดภายในเซิร์ฟเวอร์", http.StatusInternalServerError)
@@ -29,6 +29,9 @@ func GetAllWinningNumbers(w http.ResponseWriter, r *http.Request) {
 	// สร้าง slice สำหรับเก็บข้อมูลรางวัลทั้งหมด
 	var winningNumbers []WinningNumber2
 
+	// สร้าง map สำหรับเก็บหมายเลขล็อตเตอรี่ที่ไม่ซ้ำกัน
+	uniqueNumbers := make(map[string]bool)
+
 	// วนลูปอ่านข้อมูลแต่ละแถวและเก็บไว้ใน slice
 	for rows.Next() {
 		var wn WinningNumber2
@@ -37,7 +40,13 @@ func GetAllWinningNumbers(w http.ResponseWriter, r *http.Request) {
 			http.Error(w, "ข้อผิดพลาดในการดึงข้อมูล", http.StatusInternalServerError)
 			return
 		}
-		winningNumbers = append(winningNumbers, wn)
+
+		// ตรวจสอบว่าหมายเลขล็อตเตอรี่ซ้ำหรือไม่
+		if _, exists := uniqueNumbers[wn.LottoNumber]; !exists {
+			// ถ้าไม่ซ้ำ ให้เพิ่มเข้าไปใน map และ slice
+			uniqueNumbers[wn.LottoNumber] = true
+			winningNumbers = append(winningNumbers, wn)
+		}
 	}
 
 	// ตรวจสอบข้อผิดพลาดในการวนลูป (ถ้ามี)
