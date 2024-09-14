@@ -10,6 +10,8 @@ import (
 	"time"
 )
 
+// โครงสร้างข้อมูลเลขรางวัล
+
 // ฟังก์ชันสำหรับออกรางวัล
 func DrawPrizesAll(w http.ResponseWriter, r *http.Request) {
 	// ตรวจสอบว่ามีการออกรางวัลอยู่แล้วหรือไม่
@@ -27,10 +29,10 @@ func DrawPrizesAll(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// ดึงเลขหวยที่ถูกซื้อไปแล้ว
+	// ดึงเลขหวยทั้งหมด
 	rows, err := config.DB.Query("SELECT lid, lotto_number FROM lottery")
 	if err != nil {
-		log.Println("เกิดข้อผิดพลาดในการดึงข้อมูลเลขหวยที่ถูกซื้อ:", err)
+		log.Println("เกิดข้อผิดพลาดในการดึงข้อมูลเลขหวย:", err)
 		http.Error(w, "ข้อผิดพลาดในการออกรางวัล", http.StatusInternalServerError)
 		return
 	}
@@ -103,30 +105,33 @@ func DrawPrizesAll(w http.ResponseWriter, r *http.Request) {
 
 	// บันทึกเลขรางวัลที่ 1-5 ลงในฐานข้อมูล
 	for _, prize := range prizes {
-		_, err = tx.Exec("INSERT INTO winning_numbers (lotto_number, prize_amount, lid) VALUES (?, ?, ?)",
-			prize.LottoNumber, prize.PrizeAmount, prize.Lid)
+		// ตรวจสอบว่ามีรางวัลนี้อยู่ในตาราง winning_numbers แล้วหรือไม่
+		var exists int
+		err = tx.QueryRow("SELECT COUNT(*) FROM winning_numbers WHERE lotto_number = ?", prize.LottoNumber).Scan(&exists)
 		if err != nil {
-			log.Println("เกิดข้อผิดพลาดในการบันทึกข้อมูลรางวัล:", err)
+			log.Println("เกิดข้อผิดพลาดในการตรวจสอบข้อมูลรางวัล:", err)
 			return
 		}
-	}
-// บันทึกเลขรางวัลที่ 1-5 ลงในฐานข้อมูล
-for _, prize := range prizes {
-    // บันทึกข้อมูลรางวัลลงในตาราง winning_numbers
-    _, err = tx.Exec("INSERT INTO winning_numbers (lotto_number, prize_amount, lid) VALUES (?, ?, ?)",
-        prize.LottoNumber, prize.PrizeAmount, prize.Lid)
-    if err != nil {
-        log.Println("เกิดข้อผิดพลาดในการบันทึกข้อมูลรางวัล:", err)
-        return
-    }
 
-    // อัปเดตคอลัมน์ win ในตาราง lottery ให้เป็น 1 สำหรับเลขที่ถูกรางวัล
-    _, err = tx.Exec("UPDATE lottery SET win = 1 WHERE lid = ?", prize.Lid)
-    if err != nil {
-        log.Println("เกิดข้อผิดพลาดในการอัปเดตสถานะชนะ:", err)
-        return
-    }
-}
+		// ถ้าไม่มีข้อมูลในตาราง winning_numbers ให้ทำการ insert ข้อมูลรางวัล
+		if exists == 0 {
+			_, err = tx.Exec("INSERT INTO winning_numbers (lotto_number, prize_amount, lid) VALUES (?, ?, ?)",
+				prize.LottoNumber, prize.PrizeAmount, prize.Lid)
+			if err != nil {
+				log.Println("เกิดข้อผิดพลาดในการบันทึกข้อมูลรางวัล:", err)
+				return
+			}
+
+			// อัปเดตคอลัมน์ win ในตาราง lottery ให้เป็น 1 สำหรับเลขที่ถูกรางวัล
+			_, err = tx.Exec("UPDATE lottery SET win = 1 WHERE lid = ?", prize.Lid)
+			if err != nil {
+				log.Println("เกิดข้อผิดพลาดในการอัปเดตสถานะชนะ:", err)
+				return
+			}
+		} else {
+			log.Printf("เลข %s ได้รับรางวัลไปแล้ว", prize.LottoNumber)
+		}
+	}
 
 	// ส่งผลลัพธ์กลับไปยังผู้ใช้
 	w.WriteHeader(http.StatusOK)
